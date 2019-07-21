@@ -1,0 +1,3 @@
+[submodule "projecteuler-solutions"]
+	path = projecteuler-solutions
+	url = git@github.com:luckytoilet/projecteuler-solutions.git

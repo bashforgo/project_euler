@@ -1,0 +1,10 @@
+[package]
+name = "project_euler"
+version = "0.1.0"
+authors = ["Barnabas Forgo <speedo@devo.hu>"]
+edition = "2018"
+
+[dependencies]
+
+[dependencies.auto_test]
+path = "./auto_test"

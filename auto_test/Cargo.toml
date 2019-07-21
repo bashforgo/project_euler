@@ -1,0 +1,12 @@
+[package]
+name = "auto_test"
+version = "0.1.0"
+authors = ["Barnabas Forgo <speedo@devo.hu>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "0.4.30"
+quote = "0.6.13"
