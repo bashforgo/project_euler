@@ -4,7 +4,10 @@ version = "0.1.0"
 authors = ["Barnabas Forgo <speedo@devo.hu>"]
 edition = "2018"
 
+[lib]
+path = "src/lib/mod.rs"
+
 [dependencies]
 
 [dependencies.auto_test]
-path = "./auto_test"
+path = "auto_test"
