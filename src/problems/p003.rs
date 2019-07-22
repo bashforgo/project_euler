@@ -1,4 +1,4 @@
-fn decompose(n: i64) -> Vec<i64> {
+fn trial_division(n: i64) -> Vec<i64> {
     let mut n = n.clone();
     let mut factors = vec![];
 
@@ -26,7 +26,7 @@ fn decompose(n: i64) -> Vec<i64> {
 
 pub fn solve() -> String {
     let the_number = 600_851_475_143__i64;
-    let factors = decompose(the_number);
+    let factors = trial_division(the_number);
     println!("{:?}", factors);
     factors.last().unwrap().to_string()
 }
