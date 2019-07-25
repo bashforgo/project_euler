@@ -7,8 +7,8 @@ fn trial_division(n: i64) -> Vec<i64> {
         n /= 2;
     }
 
-    let mut factor = 3;
-    while factor ^ 2 <= n {
+    let mut factor: i64 = 3;
+    while factor.pow(2) <= n {
         if n % factor == 0 {
             factors.push(factor);
             n /= factor;
