@@ -1,18 +1,15 @@
-#[inline(always)]
-fn divs(n: i32, m: i32) -> bool {
-    n % m == 0
-}
+type Size = u128;
 
-fn is_prime(n: i32) -> bool {
+fn is_prime(n: Size) -> bool {
     if n <= 3 {
         return n > 1;
-    } else if divs(n, 2) || divs(n, 3) {
+    } else if n % 2 == 0 || n % 3 == 0 {
         return false;
     }
 
-    let mut i: i32 = 5;
+    let mut i: Size = 5;
     while i.pow(2) <= n {
-        if divs(n, i) || divs(n, i + 2) {
+        if n % i == 0 || n % (i + 2) == 0 {
             return false;
         }
 
@@ -22,7 +19,7 @@ fn is_prime(n: i32) -> bool {
     return true;
 }
 
-pub fn primes() -> Box<dyn Iterator<Item = i32>> {
+pub fn primes() -> Box<dyn Iterator<Item = Size>> {
     Box::new((2..).into_iter().filter(|n| is_prime(*n)))
 }
 
