@@ -1,7 +1,7 @@
 pub struct Fib(i32, i32);
 
-impl Fib {
-    pub fn new() -> Fib {
+impl Default for Fib {
+    fn default() -> Fib {
         Fib(0, 1)
     }
 }
@@ -24,7 +24,7 @@ mod tests {
 
     #[test]
     fn first_few() {
-        let first_few: Vec<_> = Fib::new().take(10).collect();
+        let first_few: Vec<_> = Fib::default().take(10).collect();
         assert_eq!(first_few, vec![1, 1, 2, 3, 5, 8, 13, 21, 34, 55]);
     }
 }

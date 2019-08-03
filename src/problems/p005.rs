@@ -16,10 +16,7 @@ fn lcm(a: i32, b: i32) -> i32 {
 }
 
 pub fn solve() -> String {
-    (2..20)
-        .into_iter()
-        .fold(1, |acc, cur| lcm(acc, cur))
-        .to_string()
+    (2..20).fold(1, lcm).to_string()
 }
 
 #[cfg(test)]

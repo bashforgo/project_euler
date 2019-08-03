@@ -16,11 +16,11 @@ fn is_prime(n: Size) -> bool {
         i += 6;
     }
 
-    return true;
+    true
 }
 
 pub fn primes() -> Box<dyn Iterator<Item = Size>> {
-    Box::new((2..).into_iter().filter(|n| is_prime(*n)))
+    Box::new((2..).filter(|n| is_prime(*n)))
 }
 
 #[cfg(test)]

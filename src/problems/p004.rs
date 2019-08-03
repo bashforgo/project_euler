@@ -35,6 +35,6 @@ mod tests {
         assert_eq!(is_palindrome(1321), false);
         assert_eq!(is_palindrome(13231), true);
         assert_eq!(is_palindrome(9009), true);
-        assert_eq!(is_palindrome(901209), false);
+        assert_eq!(is_palindrome(901_209), false);
     }
 }

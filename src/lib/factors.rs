@@ -4,7 +4,7 @@ type Size = u128;
 
 // trial division
 pub fn list(n: Size) -> Vec<Size> {
-    let mut n = n.clone();
+    let mut n = n;
     let mut factors = vec![];
 
     while n % 2 == 0 {
@@ -32,7 +32,9 @@ pub fn list(n: Size) -> Vec<Size> {
 pub fn componentize(n: Size) -> Vec<(Size, usize)> {
     let mut factors = VecDeque::from(list(n));
 
-    if factors.len() > 0 {
+    if factors.is_empty() {
+        unreachable!("no factors for {}", n)
+    } else {
         let mut result = vec![];
 
         let mut current = factors.pop_front().unwrap();
@@ -50,8 +52,6 @@ pub fn componentize(n: Size) -> Vec<(Size, usize)> {
         result.push((current, count));
 
         result
-    } else {
-        unreachable!("no factors for {}", n)
     }
 }
 
@@ -68,8 +68,8 @@ mod tests {
             list(65536),
             vec![2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
         );
-        assert_eq!(list(161051), vec![11, 11, 11, 11, 11]);
-        assert_eq!(list(123456789), vec![3, 3, 3607, 3803]);
+        assert_eq!(list(161_051), vec![11, 11, 11, 11, 11]);
+        assert_eq!(list(123_456_789), vec![3, 3, 3607, 3803]);
     }
 
     #[test]
@@ -78,7 +78,7 @@ mod tests {
         assert_eq!(componentize(65535), vec![(3, 1), (5, 1), (17, 1), (257, 1)]);
         assert_eq!(componentize(65536), vec![(2, 16)]);
         assert_eq!(
-            componentize(277945762500),
+            componentize(277_945_762_500),
             vec![(2, 2), (3, 3), (5, 5), (7, 7)]
         );
     }
