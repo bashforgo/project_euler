@@ -8,6 +8,7 @@ edition = "2018"
 path = "src/lib/mod.rs"
 
 [dependencies]
+num = "0.2.0"
 
 [dependencies.auto_test]
 path = "auto_test"
