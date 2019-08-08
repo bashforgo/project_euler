@@ -6,6 +6,11 @@ use quote::quote;
 use std::collections::HashMap;
 use std::fs::{read_dir, read_to_string};
 
+fn concat(mut acc: TokenStream2, cur: TokenStream2) -> TokenStream2 {
+    acc.extend(cur);
+    acc
+}
+
 #[proc_macro]
 pub fn auto_test(_input: TokenStream) -> TokenStream {
     let mods: Vec<_> = read_dir("src/problems")
@@ -13,7 +18,7 @@ pub fn auto_test(_input: TokenStream) -> TokenStream {
         .map(|result| result.unwrap())
         .map(|path| path.file_name().into_string().unwrap())
         .map(|file_name| file_name.replace(".rs", ""))
-        .filter(|mod_name| mod_name.starts_with("p"))
+        .filter(|mod_name| mod_name.starts_with('p'))
         .collect();
 
     let solutions = read_to_string("projecteuler-solutions/Solutions.md").unwrap();
@@ -31,21 +36,39 @@ pub fn auto_test(_input: TokenStream) -> TokenStream {
         })
         .collect();
 
-    mods.iter()
+    let solvers = mods
+        .iter()
         .map(|module| {
             let module_ident = Ident::new(module, Span::call_site());
-            let mark_as_used =
-                Ident::new(&format!("_mark_as_used_{}", module), module_ident.span());
+            let number = String::from(&module[1..])
+                .parse::<u32>()
+                .unwrap()
+                .to_string();
+            quote! {
+                solvers.insert(String::from(#number), Box::new(#module_ident::solve));
+            }
+        })
+        .fold(TokenStream2::new(), concat);
+    let solvers = quote! {
+        pub fn solvers() -> std::collections::HashMap<String, Box<dyn Fn() -> String>> {
+            use std::collections::HashMap;
+            let mut solvers: HashMap<String, Box<dyn Fn() -> String>> = HashMap::new();
+
+            #solvers
+
+            solvers
+        }
+    };
+
+    let mut result = mods
+        .iter()
+        .map(|module| {
+            let module_ident = Ident::new(module, Span::call_site());
             let test_module = Ident::new(&format!("test_{}", module), module_ident.span());
             let unit_test = Ident::new(&format!("{}_solution", module), module_ident.span());
             let answer = solutions.get(module);
             quote! {
                 mod #module_ident;
-
-                #[allow(dead_code)]
-                fn #mark_as_used() {
-                    #module_ident::solve();
-                }
 
                 #[cfg(test)]
                 mod #test_module {
@@ -59,12 +82,9 @@ pub fn auto_test(_input: TokenStream) -> TokenStream {
                 }
             }
         })
-        .fold(TokenStream2::new(), |acc, cur| {
-            quote! {
-                #acc
+        .fold(TokenStream2::new(), concat);
 
-                #cur
-            }
-        })
-        .into()
+    result.extend(solvers);
+
+    result.into()
 }
