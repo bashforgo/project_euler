@@ -1,0 +1,20 @@
+[package]
+name = "submitter"
+version = "0.1.0"
+authors = ["Barnabas Forgo <speedo@devo.hu>"]
+edition = "2018"
+
+[dependencies]
+reqwest = "0.9.19"
+
+[dependencies.gtk]
+version = "0.7.0"
+features = ["v3_16"]
+
+[dependencies.gio]
+version = "0.7.0"
+features = ["v2_44"]
+
+[dependencies.cairo-rs]
+version = "0.7.1"
+features = ["png"]
