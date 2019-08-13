@@ -22,10 +22,14 @@ pub struct UI {
 }
 
 impl UI {
-    pub fn new() -> UI {
+    pub fn new(state: Rc<State>) -> UI {
         let container = gtk::Box::new(gtk::Orientation::Vertical, 8);
         let router = Router::new();
-        let status = gtk::Label::new(Some("hello"));
+        let text = format!(
+            "solution for problem {} is {}",
+            state.problem, state.solution
+        );
+        let status = gtk::Label::new(Some(&text));
 
         container.add(&router.container);
         container.add(&status);
@@ -50,8 +54,8 @@ impl App {
             gtk::Application::new(Some("hu.devo.project-euler.submitter"), Default::default())
                 .expect("failed to initialize GTK application");
 
-        let ui = Rc::new(UI::new());
         let state = Rc::new(State::new(problem.into(), solution.into()));
+        let ui = Rc::new(UI::new(Rc::clone(&state)));
 
         App {
             application,
