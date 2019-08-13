@@ -14,7 +14,7 @@ fn main() {
         if let Some(solver) = problems::solvers().get(problem) {
             let solution = solver();
             println!("{}", solution);
-            submitter::run(problem, &solution);
+            submitter::run(problem, &solution).connect();
         } else {
             println!("problem \"{}\" not solved", problem);
             process::exit(1);
