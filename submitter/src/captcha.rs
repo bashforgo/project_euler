@@ -31,14 +31,13 @@ impl Captcha {
 }
 
 impl Disconnected {
-    pub fn connect(self) -> Captcha {
+    pub fn connect<F: Fn(String) -> () + 'static>(self, on_submit: F) -> Captcha {
         let inner = self.0;
-        let buf = inner.entry.get_buffer();
 
-        inner.entry.connect_activate(move |_| {
-            println!("value is {:?}", buf.get_text());
+        inner.entry.connect_activate(move |entry| {
+            let text = entry.get_buffer().get_text();
+            on_submit(text);
         });
-
 
         inner
     }

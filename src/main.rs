@@ -13,7 +13,6 @@ fn main() {
         let problem = &args.collect::<Vec<_>>()[1];
         if let Some(solver) = problems::solvers().get(problem) {
             let solution = solver();
-            println!("{}", solution);
             submitter::run(problem, &solution).connect();
         } else {
             println!("problem \"{}\" not solved", problem);

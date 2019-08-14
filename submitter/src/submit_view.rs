@@ -11,7 +11,9 @@ impl Default for SubmitView {
     fn default() -> SubmitView {
         let container = gtk::Box::new(gtk::Orientation::Vertical, 8);
 
-        let captcha = Captcha::create().connect();
+        let captcha = Captcha::create().connect(|answer| {
+            println!("{}", answer);
+        });
         container.add(&captcha.container);
 
         SubmitView { container, captcha }
