@@ -1,5 +1,7 @@
 mod app;
+mod captcha;
 mod router;
+mod submit_view;
 
 use app::App;
 
