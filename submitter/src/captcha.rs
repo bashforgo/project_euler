@@ -1,4 +1,3 @@
-use cairo;
 use gtk::prelude::*;
 
 const EXAMPLE_IMAGE: &[u8; 4304] = include_bytes!("./example.png");
