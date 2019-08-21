@@ -1,5 +1,7 @@
 use gtk::prelude::*;
 
+use crate::api::get_api;
+
 const EXAMPLE_IMAGE: &[u8; 4304] = include_bytes!("./example.png");
 
 pub struct Captcha {
@@ -36,6 +38,18 @@ impl Disconnected {
         inner.entry.connect_activate(move |entry| {
             let text = entry.get_buffer().get_text();
             on_submit(text);
+        });
+
+        let api = get_api();
+        let api = api.lock().unwrap();
+        let rx = api.get_captcha();
+        gtk::timeout_add(100, move || {
+            if let Ok(read) = rx.try_recv() {
+                println!("recv");
+                gtk::Continue(false)
+            } else {
+                gtk::Continue(true)
+            }
         });
 
         inner
