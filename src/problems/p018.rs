@@ -149,14 +149,27 @@ pub fn solve() -> String {
         last_row = row;
     }
 
-    fn iter(tree: &Tree) {
+    fn greedy(tree: &Tree, mut path: Vec<Value>) -> Vec<Value> {
         if tree.is_node() {
-            println!("{:?}", tree.value());
-            iter(&tree.left().unwrap());
+            path.push(*tree.value().unwrap());
+
+            let left = tree.left().unwrap();
+            let right = tree.right().unwrap();
+
+            if left.is_node() && right.is_node() {
+                if *left.value().unwrap() >= *right.value().unwrap() {
+                    greedy(&left, path)
+                } else {
+                    greedy(&right, path)
+                }
+            } else {
+                path
+            }
+        } else {
+            path
         }
     }
+    let path = greedy(&head, Vec::new());
 
-    iter(&head);
-
-    unimplemented!()
+    path.iter().map(|&n| u16::from(n)).sum::<u16>().to_string()
 }
