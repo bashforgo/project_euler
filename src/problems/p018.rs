@@ -1,5 +1,6 @@
 use std::{
     cell::{Ref, RefCell},
+    collections::{HashMap, HashSet},
     rc::Rc,
 };
 
@@ -23,6 +24,7 @@ const TRINGLE: &str = "\
 
 type Value = u8;
 
+#[derive(PartialEq, Eq, Hash)]
 enum TreeImpl {
     Node {
         value: Value,
@@ -31,6 +33,7 @@ enum TreeImpl {
     },
     Leaf,
 }
+#[derive(PartialEq, Eq, Hash)]
 struct Tree(Rc<RefCell<TreeImpl>>);
 
 impl Tree {
@@ -149,27 +152,33 @@ pub fn solve() -> String {
         last_row = row;
     }
 
-    fn greedy(tree: &Tree, mut path: Vec<Value>) -> Vec<Value> {
-        if tree.is_node() {
-            path.push(*tree.value().unwrap());
+    fn ucs(start: Tree) -> Vec<Tree> {
+        let mut frontier = HashSet::<Tree>::new();
+        let mut explored = HashSet::new();
+        let mut path_cost = HashMap::new();
 
-            let left = tree.left().unwrap();
-            let right = tree.right().unwrap();
-
-            if left.is_node() && right.is_node() {
-                if *left.value().unwrap() >= *right.value().unwrap() {
-                    greedy(&left, path)
-                } else {
-                    greedy(&right, path)
-                }
-            } else {
-                path
+        loop {
+            if frontier.is_empty() {
+                panic!("cannot find solution");
             }
-        } else {
-            path
-        }
-    }
-    let path = greedy(&head, Vec::new());
 
-    path.iter().map(|&n| u16::from(n)).sum::<u16>().to_string()
+            let node = frontier.iter().fold(None, |ret, n| {
+                ret
+            });
+
+            // is goal
+
+            explored.insert(node);
+
+            
+        }
+
+        unimplemented!()
+    }
+    let path = ucs(Tree::clone(&head));
+    path.iter().for_each(|t| {
+        println!("{:?}", t.value());
+    });
+
+    unimplemented!()
 }
