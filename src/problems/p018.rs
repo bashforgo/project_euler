@@ -1,8 +1,4 @@
-use std::{
-    cell::{Ref, RefCell},
-    collections::{HashMap, HashSet},
-    rc::Rc,
-};
+use std::collections::{HashMap, HashSet};
 
 const TRINGLE: &str = "\
 75
@@ -24,161 +20,100 @@ const TRINGLE: &str = "\
 
 type Value = u8;
 
-#[derive(PartialEq, Eq, Hash)]
-enum TreeImpl {
-    Node {
-        value: Value,
-        left: Tree,
-        right: Tree,
-    },
-    Leaf,
-}
-#[derive(PartialEq, Eq, Hash)]
-struct Tree(Rc<RefCell<TreeImpl>>);
-
-impl Tree {
-    fn new_leaf() -> Tree {
-        Tree(Rc::new(RefCell::new(TreeImpl::Leaf)))
-    }
-
-    fn new_node(value: Value) -> Tree {
-        Tree(Rc::new(RefCell::new(TreeImpl::Node {
-            value,
-            left: Tree::new_leaf(),
-            right: Tree::new_leaf(),
-        })))
-    }
-
-    fn update_left(&self, new_left: Tree) {
-        let mut parent = self.0.borrow_mut();
-        if let TreeImpl::Node { left, .. } = &mut *parent {
-            left.0 = new_left.0;
-        }
-    }
-
-    fn update_right(&self, new_right: Tree) {
-        let mut parent = self.0.borrow_mut();
-        if let TreeImpl::Node { right, .. } = &mut *parent {
-            right.0 = new_right.0;
-        }
-    }
-
-    fn is_node(&self) -> bool {
-        let inner = self.0.borrow();
-        match *inner {
-            TreeImpl::Leaf => false,
-            _ => true,
-        }
-    }
-
-    fn get_with<F: Fn(&TreeImpl) -> &T, T>(&self, choose: F) -> Option<Ref<T>> {
-        if self.is_node() {
-            let inner = self.0.borrow();
-            Some(Ref::map(inner, choose))
-        } else {
-            None
-        }
-    }
-
-    fn value(&self) -> Option<Ref<Value>> {
-        self.get_with(|t| {
-            if let TreeImpl::Node { value, .. } = t {
-                value
-            } else {
-                unreachable!()
-            }
-        })
-    }
-
-    fn left(&self) -> Option<Ref<Tree>> {
-        self.get_with(|t| {
-            if let TreeImpl::Node { left, .. } = t {
-                left
-            } else {
-                unreachable!()
-            }
-        })
-    }
-
-    fn right(&self) -> Option<Ref<Tree>> {
-        self.get_with(|t| {
-            if let TreeImpl::Node { right, .. } = t {
-                right
-            } else {
-                unreachable!()
-            }
-        })
-    }
-}
-
-impl Clone for Tree {
-    fn clone(&self) -> Self {
-        Tree(Rc::clone(&self.0))
-    }
-}
+#[derive(Eq, PartialEq, Hash, Clone)]
+struct Location(usize, usize);
 
 pub fn solve() -> String {
     let triangle = TRINGLE.to_string();
-    let mut numbers = triangle.lines().map(|line| {
-        line.split(' ')
-            .map(|digits_str| digits_str.parse::<Value>().unwrap())
-            .collect::<Vec<_>>()
-    });
+    let numbers = triangle
+        .lines()
+        .map(|line| {
+            line.split(' ')
+                .map(|digits_str| digits_str.parse::<Value>().unwrap())
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    let bottom_index = numbers.len() - 1;
 
-    let first = numbers.next().unwrap();
-    let head = Tree::new_node(first[0]);
-    let mut last_row = vec![Tree::clone(&head)];
+    let mut node: Location = Location(0, 0);
 
-    for line in numbers {
-        let mut row = Vec::with_capacity(line.len());
-        for (i, number) in (0..).zip(line) {
-            let node = Tree::new_node(number);
-            row.push(Tree::clone(&node));
-            {
-                let node = Tree::clone(&node);
-                if i >= 1 {
-                    let parent = &last_row[i - 1];
-                    parent.update_right(node);
-                }
-            }
-            {
-                let node = Tree::clone(&node);
-                if last_row.len() > i {
-                    let parent = &last_row[i];
-                    parent.update_left(node);
-                }
-            }
-        }
-        last_row = row;
-    }
+    let mut came_from: HashMap<Location, Location> = HashMap::new();
 
-    fn ucs(start: Tree) -> Vec<Tree> {
-        let mut frontier = HashSet::<Tree>::new();
-        let mut explored = HashSet::new();
-        let mut path_cost = HashMap::new();
+    let mut path_cost = HashMap::new();
+    path_cost.insert(node.clone(), u32::from(99 - numbers[0][0]));
 
-        loop {
-            if frontier.is_empty() {
-                panic!("cannot find solution");
-            }
+    let mut frontier: HashSet<Location> = HashSet::new();
+    frontier.insert(node.clone());
 
-            let node = frontier.iter().fold(None, |ret, n| {
-                ret
-            });
+    let mut explored: HashSet<Location> = HashSet::new();
 
-            // is goal
-
-            explored.insert(node);
-
-            
+    loop {
+        if frontier.is_empty() {
+            panic!("fail");
         }
 
-        unimplemented!()
-    }
-    let path = ucs(Tree::clone(&head));
-    path.iter().for_each(|t| {
-        println!("{:?}", t.value());
-    });
+        node = frontier
+            .iter()
+            .fold(None, |acc, loc| {
+                if acc.is_none()
+                    || path_cost.get(&loc).unwrap() < path_cost.get(acc.unwrap()).unwrap()
+                {
+                    Some(loc)
+                } else {
+                    acc
+                }
+            })
+            .unwrap()
+            .clone();
+        frontier.remove(&node);
 
-    unimplemented!()
+        let Location(a, b) = node.clone();
+        if a == bottom_index {
+            break;
+        }
+
+        explored.insert(node.clone());
+
+        let left = Location(a + 1, b);
+        let right = Location(a + 1, b + 1);
+        let children = vec![left, right];
+
+        for child in children {
+            let Location(x, y) = child.clone();
+
+            if numbers.get(x).and_then(|_| numbers.get(y)).is_none() {
+                continue;
+            }
+
+            let child_path_cost = path_cost.get(&node).unwrap() + u32::from(99 - numbers[x][y]);
+
+            if frontier.contains(&child) {
+                if *path_cost.get(&child).unwrap() > child_path_cost {
+                    path_cost.insert(child.clone(), child_path_cost);
+                    came_from.insert(child, node.clone());
+                }
+            } else if !explored.contains(&child) {
+                frontier.insert(child.clone());
+                path_cost.insert(child.clone(), child_path_cost);
+                came_from.insert(child, node.clone());
+            }
+        }
+    }
+
+    let mut path = vec![];
+    loop {
+        path.push(node.clone());
+        if let Some(parent) = came_from.get(&node) {
+            node = parent.clone();
+        } else {
+            break;
+        }
+    }
+    let max = path
+        .into_iter()
+        .map(|Location(x, y)| numbers[x][y])
+        .map(u32::from)
+        .sum::<u32>();
+
+    max.to_string()
 }
