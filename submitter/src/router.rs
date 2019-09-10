@@ -1,5 +1,7 @@
+use std::rc::Rc;
 use gtk::prelude::*;
 
+use crate::app::State;
 use crate::submit_view::SubmitView;
 
 pub enum View {
@@ -11,10 +13,10 @@ pub struct Router {
     pub submit_view: SubmitView,
 }
 
-impl Default for Router {
-    fn default() -> Router {
+impl Router {
+    pub fn new(state: Rc<State>) -> Router {
         let container = gtk::Stack::new();
-        let submit_view = SubmitView::default();
+        let submit_view = SubmitView::new(state);
 
         container.add(&submit_view.container);
 
@@ -26,12 +28,6 @@ impl Default for Router {
         router.switch_to(View::Submit);
 
         router
-    }
-}
-
-impl Router {
-    pub fn new() -> Router {
-        Router::default()
     }
 
     pub fn switch_to(&self, view: View) {

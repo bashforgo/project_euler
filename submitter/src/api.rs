@@ -1,9 +1,15 @@
-use reqwest::Client;
+use reqwest::{header, Client};
 use std::{
     io::Read,
     sync::{mpsc, Arc, Mutex},
     thread,
 };
+
+const BASE_URL: &str = "https://projecteuler.net";
+
+macro_rules! make_url {
+    ($($arg:tt)*) => (&format!("{}{}", BASE_URL, $($arg)*))
+}
 
 pub struct API {
     pub session: Option<String>,
@@ -14,7 +20,7 @@ impl API {
     pub fn new() -> API {
         let client = Client::new();
         API {
-            session: None,
+            session: std::env::var("EULER_SESSION").ok(),
             client,
         }
     }
@@ -28,10 +34,15 @@ impl API {
                 .lock()
                 .map_err(|_| "can't get api")
                 .and_then(|api| {
-                    api.client
-                        .get("https://projecteuler.net/captcha/show_captcha.php")
-                        .send()
-                        .map_err(|_| "can't download captcha")
+                    println!("{:?}", api.session);
+
+                    let mut req = api.client.get(make_url!("/captcha/show_captcha.php"));
+
+                    if let Some(sess) = &api.session {
+                        req = req.header(header::COOKIE, format!("PHPSESSID={}", sess));
+                    }
+
+                    req.send().map_err(|_| "can't download captcha")
                 })
                 .map(|res| Box::new(res) as Box<dyn Read + Send>)
                 .ok();
@@ -40,6 +51,36 @@ impl API {
         });
 
         rx
+    }
+
+    pub fn post_solution(&self, problem: String, solution: String, captcha: String) {
+        // let (tx, rx) = mpsc::channel();
+
+        thread::spawn(move || {
+            let api = get_api();
+            api.lock()
+                .map_err(|_| "can't get api")
+                .and_then(|api| {
+                    let mut req = api
+                        .client
+                        .post(make_url!(format!("/problem={}", problem)))
+                        .form(&[
+                            (format!("guess_{}", problem).as_str(), solution.as_str()),
+                            ("captcha", captcha.as_str()),
+                        ]);
+
+                    if let Some(sess) = &api.session {
+                        req = req.header(header::COOKIE, format!("PHPSESSID={}", sess));
+                    }
+
+                    req.send().map_err(|_| "error posting solution")
+                })
+                .ok();
+
+            // tx.send(read).unwrap();
+        });
+
+        // rx
     }
 }
 

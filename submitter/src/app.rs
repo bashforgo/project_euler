@@ -24,7 +24,7 @@ pub struct UI {
 impl UI {
     pub fn new(state: Rc<State>) -> UI {
         let container = gtk::Box::new(gtk::Orientation::Vertical, 8);
-        let router = Router::new();
+        let router = Router::new(Rc::clone(&state));
         let text = format!(
             "solution for problem {} is {}",
             state.problem, state.solution
