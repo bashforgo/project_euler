@@ -2,8 +2,6 @@ use gtk::prelude::*;
 
 use crate::api::get_api;
 
-const EXAMPLE_IMAGE: &[u8; 4304] = include_bytes!("./example.png");
-
 pub struct Captcha {
     pub container: gtk::Box,
     pub image: gtk::Image,
@@ -15,9 +13,7 @@ impl Captcha {
     pub fn create() -> Disconnected {
         let container = gtk::Box::new(gtk::Orientation::Vertical, 8);
 
-        let mut boxed = Box::new(&EXAMPLE_IMAGE[..]);
-        let surface = cairo::ImageSurface::create_from_png(&mut boxed).unwrap();
-        let image = gtk::Image::new_from_surface(Some(&surface));
+        let image = gtk::Image::new();
         container.add(&image);
 
         let entry = gtk::Entry::new();
@@ -43,9 +39,14 @@ impl Disconnected {
         let api = get_api();
         let api = api.lock().unwrap();
         let rx = api.get_captcha();
+
+        let image = inner.image.clone();
         gtk::timeout_add(100, move || {
             if let Ok(read) = rx.try_recv() {
-                println!("recv");
+                if let Some(mut read) = read {
+                    let surface = cairo::ImageSurface::create_from_png(&mut read).unwrap();
+                    image.set_from_surface(Some(&surface));
+                }
                 gtk::Continue(false)
             } else {
                 gtk::Continue(true)

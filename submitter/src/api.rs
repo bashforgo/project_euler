@@ -24,15 +24,19 @@ impl API {
 
         thread::spawn(move || {
             let api = get_api();
-            let api = api.lock().unwrap();
-            let res = api
-                .client
-                .get("https://projecteuler.net/captcha/show_captcha.php")
-                .send()
-                .unwrap();
-            let read: Box<dyn Read + Send> = Box::new(res);
+            let read = api
+                .lock()
+                .map_err(|_| "can't get api")
+                .and_then(|api| {
+                    api.client
+                        .get("https://projecteuler.net/captcha/show_captcha.php")
+                        .send()
+                        .map_err(|_| "can't download captcha")
+                })
+                .map(|res| Box::new(res) as Box<dyn Read + Send>)
+                .ok();
 
-            tx.send(Some(read));
+            tx.send(read).unwrap();
         });
 
         rx
