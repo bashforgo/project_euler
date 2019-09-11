@@ -45,8 +45,6 @@ impl API {
                 .lock()
                 .map_err(|_| "can't get api")
                 .and_then(|api| {
-                    println!("{:?}", api.session);
-
                     let mut req = api.client.get(make_url!("/captcha/show_captcha.php"));
 
                     if let Some(sess) = &api.session {
@@ -90,10 +88,7 @@ impl API {
                         req = req.header(header::COOKIE, format!("PHPSESSID={}", sess));
                     }
 
-                    req.send().map_err(|e| {
-                        println!("{:?}", e);
-                        "error posting solution"
-                    })
+                    req.send().map_err(|_| "error posting solution")
                 })
                 .and_then(|mut res| {
                     use PostSolutionResult::*;
@@ -109,10 +104,6 @@ impl API {
                     } else {
                         Ok(Unknown)
                     }
-                })
-                .map_err(|e| {
-                    println!("err {}", e);
-                    e
                 })
                 .ok();
 

@@ -5,6 +5,7 @@ mod api;
 mod app;
 mod captcha;
 mod router;
+mod status_view;
 mod submit_view;
 
 use app::App;

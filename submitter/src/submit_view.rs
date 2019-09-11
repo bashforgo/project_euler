@@ -1,7 +1,12 @@
 use gtk::prelude::*;
 use std::rc::Rc;
 
-use crate::{api::get_api, app::State, captcha::Captcha};
+use crate::{
+    api::{get_api, PostSolutionResult},
+    app::{Message, State},
+    captcha::Captcha,
+    status_view,
+};
 
 pub struct SubmitView {
     pub container: gtk::Box,
@@ -16,9 +21,22 @@ impl SubmitView {
             let api = get_api();
             let api = api.lock().unwrap();
             let rx = api.post_solution(state.problem.clone(), state.solution.clone(), captcha);
+
+            let state = Rc::clone(&state);
             gtk::timeout_add(100, move || {
                 if let Ok(res) = rx.try_recv() {
-                    println!("{:?}", res);
+                    use PostSolutionResult::*;
+
+                    let message = match res {
+                        Some(WrongCaptcha) => "incorrect captcha",
+                        _ => unreachable!(),
+                    }
+                    .to_string();
+
+                    state
+                        .dispatch
+                        .send(Message::StatusView(status_view::Message { message }))
+                        .unwrap();
                     gtk::Continue(false)
                 } else {
                     gtk::Continue(true)

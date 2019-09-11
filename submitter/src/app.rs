@@ -1,17 +1,32 @@
 use gio::prelude::*;
 use gtk::prelude::*;
-use std::rc::Rc;
+use std::{rc::Rc, sync::mpsc};
 
-use crate::router::Router;
+use crate::{
+    status_view,
+    router::{self, Router}};
+
+pub enum Message {
+    StatusView(status_view::Message),
+}
 
 pub struct State {
     pub problem: String,
     pub solution: String,
+    pub dispatch: mpsc::Sender<Message>,
+    message_bus: mpsc::Receiver<Message>,
 }
 
 impl State {
     pub fn new(problem: String, solution: String) -> State {
-        State { problem, solution }
+        let (dispatch, message_bus) = mpsc::channel();
+
+        State {
+            problem,
+            solution,
+            dispatch,
+            message_bus,
+        }
     }
 }
 
@@ -67,7 +82,6 @@ impl App {
     pub fn connect(&self) {
         let ui = Rc::clone(&self.ui);
         let state = Rc::clone(&self.state);
-
         self.application.connect_activate(move |application| {
             let window = gtk::ApplicationWindow::new(application);
             window.set_title("submitter");
@@ -83,6 +97,23 @@ impl App {
 
             window.show_all();
             window.present();
+        });
+
+        let ui = Rc::clone(&self.ui);
+        let state = Rc::clone(&self.state);
+        gtk::timeout_add(100, move || {
+            let message_bus = &state.message_bus;
+            if let Ok(message) = message_bus.try_recv() {
+                use Message::*;
+
+                match message {
+                    StatusView(m) => {
+                        ui.router.switch_to(router::View::Status(m));
+                    }
+                }
+            }
+
+            gtk::Continue(true)
         });
 
         self.application.run(&[]);

@@ -3,26 +3,32 @@ use gtk::prelude::*;
 
 use crate::app::State;
 use crate::submit_view::SubmitView;
+use crate::status_view::{self, StatusView};
 
 pub enum View {
     Submit,
+    Status(status_view::Message),
 }
 
 pub struct Router {
     pub container: gtk::Stack,
     pub submit_view: SubmitView,
+    pub status_view: StatusView,
 }
 
 impl Router {
     pub fn new(state: Rc<State>) -> Router {
         let container = gtk::Stack::new();
         let submit_view = SubmitView::new(state);
+        let status_view = StatusView::new();
 
         container.add(&submit_view.container);
+        container.add(&status_view.container);
 
         let router = Router {
             container,
             submit_view,
+            status_view,
         };
 
         router.switch_to(View::Submit);
@@ -35,6 +41,11 @@ impl Router {
             View::Submit => {
                 self.container
                     .set_visible_child(&self.submit_view.container);
+            }
+            View::Status(m) => {
+                self.status_view.on_switch_to(m);
+                self.container
+                    .set_visible_child(&self.status_view.container);
             }
         }
     }
