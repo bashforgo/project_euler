@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-const TRINGLE: &str = "\
+const TRIANGLE: &str = "\
 75
 95 64
 17 47 82
@@ -18,13 +18,13 @@ const TRINGLE: &str = "\
 04 62 98 27 23 09 70 98 73 93 38 53 60 04 23
 ";
 
-type Value = u8;
+type Value = u32;
 
 #[derive(Eq, PartialEq, Hash, Clone)]
 struct Location(usize, usize);
 
-pub fn solve() -> String {
-    let triangle = TRINGLE.to_string();
+pub fn maximum_path_sum(triangle: &str) -> Value {
+    let triangle = triangle.to_string();
     let numbers = triangle
         .lines()
         .map(|line| {
@@ -40,7 +40,7 @@ pub fn solve() -> String {
     let mut came_from: HashMap<Location, Location> = HashMap::new();
 
     let mut path_cost = HashMap::new();
-    path_cost.insert(node.clone(), u32::from(99 - numbers[0][0]));
+    path_cost.insert(node.clone(), 99 - numbers[0][0]);
 
     let mut frontier: HashSet<Location> = HashSet::new();
     frontier.insert(node.clone());
@@ -85,7 +85,7 @@ pub fn solve() -> String {
                 continue;
             }
 
-            let child_path_cost = path_cost.get(&node).unwrap() + u32::from(99 - numbers[x][y]);
+            let child_path_cost = path_cost.get(&node).unwrap() + (99 - numbers[x][y]);
 
             if frontier.contains(&child) {
                 if *path_cost.get(&child).unwrap() > child_path_cost {
@@ -109,11 +109,13 @@ pub fn solve() -> String {
             break;
         }
     }
-    let max = path
-        .into_iter()
-        .map(|Location(x, y)| numbers[x][y])
-        .map(u32::from)
-        .sum::<u32>();
 
+    path.into_iter()
+        .map(|Location(x, y)| numbers[x][y])
+        .sum::<Value>()
+}
+
+pub fn solve() -> String {
+    let max = maximum_path_sum(TRIANGLE);
     max.to_string()
 }
