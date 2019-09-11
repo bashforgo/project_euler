@@ -1,4 +1,4 @@
-use reqwest::{header, Client};
+use reqwest::{header, Client, RedirectPolicy};
 use std::{
     io::Read,
     sync::{mpsc, Arc, Mutex},
@@ -11,6 +11,14 @@ macro_rules! make_url {
     ($($arg:tt)*) => (&format!("{}{}", BASE_URL, $($arg)*))
 }
 
+#[derive(Debug)]
+pub enum PostSolutionResult {
+    WrongCaptcha,
+    BadSolution,
+    Success,
+    Unknown,
+}
+
 pub struct API {
     pub session: Option<String>,
     client: Client,
@@ -18,7 +26,10 @@ pub struct API {
 
 impl API {
     pub fn new() -> API {
-        let client = Client::new();
+        let client = Client::builder()
+            .redirect(RedirectPolicy::none())
+            .build()
+            .unwrap();
         API {
             session: std::env::var("EULER_SESSION").ok(),
             client,
@@ -53,12 +64,18 @@ impl API {
         rx
     }
 
-    pub fn post_solution(&self, problem: String, solution: String, captcha: String) {
-        // let (tx, rx) = mpsc::channel();
+    pub fn post_solution(
+        &self,
+        problem: String,
+        solution: String,
+        captcha: String,
+    ) -> mpsc::Receiver<Option<PostSolutionResult>> {
+        let (tx, rx) = mpsc::channel();
 
         thread::spawn(move || {
             let api = get_api();
-            api.lock()
+            let res = api
+                .lock()
                 .map_err(|_| "can't get api")
                 .and_then(|api| {
                     let mut req = api
@@ -73,14 +90,36 @@ impl API {
                         req = req.header(header::COOKIE, format!("PHPSESSID={}", sess));
                     }
 
-                    req.send().map_err(|_| "error posting solution")
+                    req.send().map_err(|e| {
+                        println!("{:?}", e);
+                        "error posting solution"
+                    })
+                })
+                .and_then(|mut res| {
+                    use PostSolutionResult::*;
+
+                    let text = res.text().map_err(|_| "can't parse body")?;
+
+                    if res.status() == 302 {
+                        Ok(WrongCaptcha)
+                    } else if text.contains("answer_wrong.png") {
+                        Ok(BadSolution)
+                    } else if text.contains("answer_correct.png") {
+                        Ok(Success)
+                    } else {
+                        Ok(Unknown)
+                    }
+                })
+                .map_err(|e| {
+                    println!("err {}", e);
+                    e
                 })
                 .ok();
 
-            // tx.send(read).unwrap();
+            tx.send(res).unwrap();
         });
 
-        // rx
+        rx
     }
 }
 

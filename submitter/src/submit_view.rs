@@ -14,13 +14,16 @@ impl SubmitView {
 
         let captcha = Captcha::create().connect(move |captcha| {
             let api = get_api();
-            api.lock()
-                .map_err(|_| "can't get api")
-                .and_then(|api| {
-                    api.post_solution(state.problem.clone(), state.solution.clone(), captcha);
-                    Ok(())
-                })
-                .unwrap();
+            let api = api.lock().unwrap();
+            let rx = api.post_solution(state.problem.clone(), state.solution.clone(), captcha);
+            gtk::timeout_add(100, move || {
+                if let Ok(res) = rx.try_recv() {
+                    println!("{:?}", res);
+                    gtk::Continue(false)
+                } else {
+                    gtk::Continue(true)
+                }
+            });
         });
         container.add(&captcha.container);
 
