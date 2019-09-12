@@ -24,6 +24,9 @@ impl StatusView {
         let container = gtk::Stack::new();
 
         let success = gtk::Box::new(gtk::Orientation::Vertical, 8);
+        success.set_property("vexpand", &true).unwrap();
+        success.set_property("valign", &gtk::Align::Center).unwrap();
+
         let success_label = gtk::Label::new(None);
         success.add(&success_label);
         {
@@ -46,6 +49,11 @@ impl StatusView {
         container.add(&success);
 
         let recoverable = gtk::Box::new(gtk::Orientation::Vertical, 8);
+        recoverable.set_property("vexpand", &true).unwrap();
+        recoverable
+            .set_property("valign", &gtk::Align::Center)
+            .unwrap();
+
         let recoverable_label = gtk::Label::new(None);
         recoverable.add(&recoverable_label);
         {
@@ -78,6 +86,11 @@ impl StatusView {
         container.add(&recoverable);
 
         let unrecoverable = gtk::Box::new(gtk::Orientation::Vertical, 8);
+        unrecoverable.set_property("vexpand", &true).unwrap();
+        unrecoverable
+            .set_property("valign", &gtk::Align::Center)
+            .unwrap();
+
         let unrecoverable_label = gtk::Label::new(None);
         unrecoverable.add(&unrecoverable_label);
         {

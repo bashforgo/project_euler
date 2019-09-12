@@ -16,6 +16,10 @@ pub struct SubmitView {
 impl SubmitView {
     pub fn new(state: Rc<State>) -> SubmitView {
         let container = gtk::Box::new(gtk::Orientation::Vertical, 8);
+        container.set_property("vexpand", &true).unwrap();
+        container
+            .set_property("valign", &gtk::Align::Center)
+            .unwrap();
 
         let label = format!("submitting problem {}: {}", state.problem, state.solution);
         let label = gtk::Label::new(Some(&label));
