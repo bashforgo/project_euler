@@ -3,11 +3,14 @@ use gtk::prelude::*;
 use std::{rc::Rc, sync::mpsc};
 
 use crate::{
+    router::{self, Router},
     status_view,
-    router::{self, Router}};
+};
 
 pub enum Message {
+    SubmitView,
     StatusView(status_view::Message),
+    Quit,
 }
 
 pub struct State {
@@ -33,27 +36,16 @@ impl State {
 pub struct UI {
     pub container: gtk::Box,
     pub router: Router,
-    pub status: gtk::Label,
 }
 
 impl UI {
     pub fn new(state: Rc<State>) -> UI {
         let container = gtk::Box::new(gtk::Orientation::Vertical, 8);
         let router = Router::new(Rc::clone(&state));
-        let text = format!(
-            "solution for problem {} is {}",
-            state.problem, state.solution
-        );
-        let status = gtk::Label::new(Some(&text));
 
         container.add(&router.container);
-        container.add(&status);
 
-        UI {
-            container,
-            router,
-            status,
-        }
+        UI { container, router }
     }
 }
 
@@ -81,18 +73,12 @@ impl App {
 
     pub fn connect(&self) {
         let ui = Rc::clone(&self.ui);
-        let state = Rc::clone(&self.state);
         self.application.connect_activate(move |application| {
             let window = gtk::ApplicationWindow::new(application);
             window.set_title("submitter");
             window.set_position(gtk::WindowPosition::Center);
             window.set_size_request(400, 300);
 
-            let text = format!(
-                "solution for problem {} is {}",
-                state.problem, state.solution
-            );
-            ui.status.set_text(&text);
             window.add(&ui.container);
 
             window.show_all();
@@ -101,14 +87,21 @@ impl App {
 
         let ui = Rc::clone(&self.ui);
         let state = Rc::clone(&self.state);
+        let application = self.application.clone();
         gtk::timeout_add(100, move || {
             let message_bus = &state.message_bus;
             if let Ok(message) = message_bus.try_recv() {
                 use Message::*;
 
                 match message {
+                    SubmitView => {
+                        ui.router.switch_to(router::View::Submit);
+                    }
                     StatusView(m) => {
                         ui.router.switch_to(router::View::Status(m));
+                    }
+                    Quit => {
+                        application.quit();
                     }
                 }
             }

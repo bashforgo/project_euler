@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use crate::{
     api::{get_api, PostSolutionResult},
-    app::{Message, State},
+    app::{self, State},
     captcha::Captcha,
     status_view,
 };
@@ -17,6 +17,10 @@ impl SubmitView {
     pub fn new(state: Rc<State>) -> SubmitView {
         let container = gtk::Box::new(gtk::Orientation::Vertical, 8);
 
+        let label = format!("submitting problem {}: {}", state.problem, state.solution);
+        let label = gtk::Label::new(Some(&label));
+        container.add(&label);
+
         let captcha = Captcha::create().connect(move |captcha| {
             let api = get_api();
             let api = api.lock().unwrap();
@@ -25,17 +29,20 @@ impl SubmitView {
             let state = Rc::clone(&state);
             gtk::timeout_add(100, move || {
                 if let Ok(res) = rx.try_recv() {
+                    use status_view::Message;
                     use PostSolutionResult::*;
 
                     let message = match res {
-                        Some(WrongCaptcha) => "incorrect captcha",
-                        _ => unreachable!(),
-                    }
-                    .to_string();
+                        Some(WrongCaptcha) => Message::Recoverable("wrong captcha".into()),
+                        Some(BadSolution) => Message::Unrecoverable("wrong solution".into()),
+                        Some(Success) => Message::Success("solution submitted".into()),
+                        Some(Unknown) => Message::Recoverable("unknown error".into()),
+                        None => Message::Recoverable("network error".into()),
+                    };
 
                     state
                         .dispatch
-                        .send(Message::StatusView(status_view::Message { message }))
+                        .send(app::Message::StatusView(message))
                         .unwrap();
                     gtk::Continue(false)
                 } else {
@@ -46,5 +53,9 @@ impl SubmitView {
         container.add(&captcha.container);
 
         SubmitView { container, captcha }
+    }
+
+    pub fn on_switch_to(&self) {
+        self.captcha.get_new();
     }
 }

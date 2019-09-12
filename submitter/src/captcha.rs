@@ -25,22 +25,13 @@ impl Captcha {
             entry,
         })
     }
-}
 
-impl Disconnected {
-    pub fn connect<F: Fn(String) -> () + 'static>(self, on_submit: F) -> Captcha {
-        let inner = self.0;
-
-        inner.entry.connect_activate(move |entry| {
-            let text = entry.get_buffer().get_text();
-            on_submit(text);
-        });
-
+    pub fn get_new(&self) {
         let api = get_api();
         let api = api.lock().unwrap();
         let rx = api.get_captcha();
 
-        let image = inner.image.clone();
+        let image = self.image.clone();
         gtk::timeout_add(100, move || {
             if let Ok(read) = rx.try_recv() {
                 if let Some(mut read) = read {
@@ -51,6 +42,17 @@ impl Disconnected {
             } else {
                 gtk::Continue(true)
             }
+        });
+    }
+}
+
+impl Disconnected {
+    pub fn connect<F: Fn(String) -> () + 'static>(self, on_submit: F) -> Captcha {
+        let inner = self.0;
+
+        inner.entry.connect_activate(move |entry| {
+            let text = entry.get_buffer().get_text();
+            on_submit(text);
         });
 
         inner
