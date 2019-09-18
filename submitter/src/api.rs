@@ -1,5 +1,7 @@
+use dirs;
 use reqwest::{header, Client, RedirectPolicy};
 use std::{
+    fs,
     io::Read,
     sync::{mpsc, Arc, Mutex},
     thread,
@@ -24,16 +26,27 @@ pub struct API {
     client: Client,
 }
 
+fn get_session() -> Option<String> {
+    let mut home = dirs::home_dir()?;
+    home.push(".project_euler_session");
+    fs::read_to_string(home).ok()
+}
+
 impl API {
-    pub fn new() -> API {
+    fn new() -> API {
         let client = Client::builder()
             .redirect(RedirectPolicy::none())
             .build()
             .unwrap();
+
         API {
-            session: std::env::var("EULER_SESSION").ok(),
+            session: get_session(),
             client,
         }
+    }
+
+    pub fn has_session(&self) -> bool {
+        self.session.is_some()
     }
 
     pub fn get_captcha(&self) -> mpsc::Receiver<Option<Box<dyn Read + Send>>> {

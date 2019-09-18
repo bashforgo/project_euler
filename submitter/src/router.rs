@@ -2,9 +2,9 @@ use crate::app::State;
 use gtk::prelude::*;
 use std::rc::Rc;
 
-
 use crate::status_view::{self, StatusView};
 use crate::submit_view::SubmitView;
+
 pub enum View {
     Submit,
     Status(status_view::Message),
@@ -25,15 +25,11 @@ impl Router {
         container.add(&submit_view.container);
         container.add(&status_view.container);
 
-        let router = Router {
+        Router {
             container,
             submit_view,
             status_view,
-        };
-
-        router.switch_to(View::Submit);
-
-        router
+        }
     }
 
     pub fn switch_to(&self, view: View) {

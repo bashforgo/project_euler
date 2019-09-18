@@ -3,6 +3,7 @@ use gtk::prelude::*;
 use std::{rc::Rc, sync::mpsc};
 
 use crate::{
+    api::get_api,
     router::{self, Router},
     status_view,
 };
@@ -84,6 +85,26 @@ impl App {
             window.show_all();
             window.present();
         });
+
+        let state = Rc::clone(&self.state);
+        {
+            let has_session = {
+                let api = get_api();
+                let api = api.lock().unwrap();
+                api.has_session()
+            };
+
+            if has_session {
+                state.dispatch.send(Message::SubmitView).unwrap();
+            } else {
+                state
+                    .dispatch
+                    .send(Message::StatusView(status_view::Message::Unrecoverable(
+                        "unimplemented".into(),
+                    )))
+                    .unwrap();
+            }
+        }
 
         let ui = Rc::clone(&self.ui);
         let state = Rc::clone(&self.state);
