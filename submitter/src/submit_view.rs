@@ -5,8 +5,8 @@ use crate::{
     api::{get_api, PostSolutionResult},
     app::{self, State},
     captcha::Captcha,
-    status_view,
     router::View,
+    status_view,
 };
 
 pub struct SubmitView {
@@ -26,7 +26,8 @@ impl SubmitView {
         let label = gtk::Label::new(Some(&label));
         container.add(&label);
 
-        let captcha = Captcha::create().connect(move |captcha| {
+        let captcha = Captcha::create();
+        captcha.connect(move |captcha| {
             let api = get_api();
             let api = api.lock().unwrap();
             let rx = api.post_solution(state.problem.clone(), state.solution.clone(), captcha);

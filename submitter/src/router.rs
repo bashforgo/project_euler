@@ -31,7 +31,7 @@ impl Router {
         let status_view = StatusView::new(Rc::clone(&state));
         container.add(&status_view.container);
 
-        let login_view = LoginView::new();
+        let login_view = LoginView::new(Rc::clone(&state));
         container.add(&login_view.container);
 
         Router {
@@ -55,6 +55,7 @@ impl Router {
                     .set_visible_child(&self.status_view.container);
             }
             View::Login => {
+                self.login_view.on_switch_to();
                 self.container.set_visible_child(&self.login_view.container);
             }
         }

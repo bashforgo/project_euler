@@ -2,28 +2,29 @@ use gtk::prelude::*;
 
 use crate::api::get_api;
 
+#[derive(Clone)]
 pub struct Captcha {
     pub container: gtk::Box,
     pub image: gtk::Image,
     pub entry: gtk::Entry,
 }
-pub struct Disconnected(Captcha);
 
 impl Captcha {
-    pub fn create() -> Disconnected {
+    pub fn create() -> Captcha {
         let container = gtk::Box::new(gtk::Orientation::Vertical, 8);
 
         let image = gtk::Image::new();
         container.add(&image);
 
         let entry = gtk::Entry::new();
+        entry.set_placeholder_text(Some("captcha"));
         container.add(&entry);
 
-        Disconnected(Captcha {
+        Captcha {
             container,
             image,
             entry,
-        })
+        }
     }
 
     pub fn get_new(&self) {
@@ -44,17 +45,15 @@ impl Captcha {
             }
         });
     }
-}
 
-impl Disconnected {
-    pub fn connect<F: Fn(String) -> () + 'static>(self, on_submit: F) -> Captcha {
-        let inner = self.0;
-
-        inner.entry.connect_activate(move |entry| {
+    pub fn connect<F: Fn(String) -> () + 'static>(&self, on_submit: F) {
+        self.entry.connect_activate(move |entry| {
             let text = entry.get_buffer().get_text();
             on_submit(text);
         });
+    }
 
-        inner
+    pub fn get_text(&self) -> String {
+        self.entry.get_buffer().get_text()
     }
 }
