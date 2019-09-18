@@ -6,6 +6,7 @@ use crate::{
     app::{self, State},
     captcha::Captcha,
     status_view,
+    router::View,
 };
 
 pub struct SubmitView {
@@ -46,7 +47,7 @@ impl SubmitView {
 
                     state
                         .dispatch
-                        .send(app::Message::StatusView(message))
+                        .send(app::Message::SwitchTo(View::Status(message)))
                         .unwrap();
                     gtk::Continue(false)
                 } else {

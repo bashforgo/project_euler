@@ -4,13 +4,11 @@ use std::{rc::Rc, sync::mpsc};
 
 use crate::{
     api::get_api,
-    router::{self, Router},
-    status_view,
+    router::{Router, View},
 };
 
 pub enum Message {
-    SubmitView,
-    StatusView(status_view::Message),
+    SwitchTo(View),
     Quit,
 }
 
@@ -95,14 +93,12 @@ impl App {
             };
 
             if has_session {
-                state.dispatch.send(Message::SubmitView).unwrap();
-            } else {
                 state
                     .dispatch
-                    .send(Message::StatusView(status_view::Message::Unrecoverable(
-                        "unimplemented".into(),
-                    )))
+                    .send(Message::SwitchTo(View::Submit))
                     .unwrap();
+            } else {
+                state.dispatch.send(Message::SwitchTo(View::Login)).unwrap();
             }
         }
 
@@ -115,11 +111,8 @@ impl App {
                 use Message::*;
 
                 match message {
-                    SubmitView => {
-                        ui.router.switch_to(router::View::Submit);
-                    }
-                    StatusView(m) => {
-                        ui.router.switch_to(router::View::Status(m));
+                    SwitchTo(view) => {
+                        ui.router.switch_to(view);
                     }
                     Quit => {
                         application.quit();

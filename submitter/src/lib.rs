@@ -4,6 +4,7 @@ extern crate lazy_static;
 mod api;
 mod app;
 mod captcha;
+mod login_view;
 mod router;
 mod status_view;
 mod submit_view;

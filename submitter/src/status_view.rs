@@ -1,7 +1,7 @@
 use gtk::prelude::*;
 use std::rc::Rc;
 
-use crate::app::{self, State};
+use crate::{app::{self, State}, router::View};
 
 pub enum Message {
     Success(String),
@@ -68,7 +68,7 @@ impl StatusView {
                 retry_button.set_label("retry");
                 let dispatch = state.dispatch.clone();
                 retry_button.connect_clicked(move |_| {
-                    dispatch.send(app::Message::SubmitView).unwrap();
+                    dispatch.send(app::Message::SwitchTo(View::Submit)).unwrap();
                 });
                 recoverable_actions.add(&retry_button);
             }
