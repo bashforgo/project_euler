@@ -6,6 +6,7 @@ use crate::{app::State, captcha::Captcha};
 #[derive(Clone)]
 pub struct LoginView {
     pub container: gtk::Box,
+    label: gtk::Label,
     username: gtk::Entry,
     password: gtk::Entry,
     captcha: Captcha,
@@ -21,7 +22,7 @@ impl LoginView {
             .set_property("valign", &gtk::Align::Center)
             .unwrap();
 
-        let label = gtk::Label::new(Some("login to project euler"));
+        let label = gtk::Label::new(None);
         container.add(&label);
 
         let username = gtk::Entry::new();
@@ -38,6 +39,7 @@ impl LoginView {
 
         let disconnected = Disconnected(LoginView {
             container,
+            label,
             username,
             password,
             captcha,
@@ -51,10 +53,22 @@ impl LoginView {
         let username = self.username.get_buffer().get_text();
         let password = self.password.get_buffer().get_text();
         let captcha = self.captcha.get_text();
-        println!("username={} password={} captcha={}", username, password, captcha);
+
+        if vec![&username, &password, &captcha]
+            .iter()
+            .any(|s| s.is_empty())
+        {
+            self.label.set_label("all fields are required");
+        }
+
+        println!(
+            "username={} password={} captcha={}",
+            username, password, captcha
+        );
     }
 
     pub fn on_switch_to(&self) {
+        self.label.set_label("login to project euler");
         self.captcha.get_new();
     }
 }
