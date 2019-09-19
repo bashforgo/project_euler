@@ -1,11 +1,13 @@
 use gio::prelude::*;
 use gtk::prelude::*;
-use std::{rc::Rc, sync::mpsc};
+use std::{rc::Rc, sync::mpsc, u32};
 
 use crate::{
     api::get_api,
     router::{Router, View},
 };
+
+const APP_CSS: &[u8] = include_bytes!("app.css");
 
 pub enum Message {
     SwitchTo(View),
@@ -79,6 +81,12 @@ impl App {
             window.set_size_request(400, 300);
 
             window.add(&ui.container);
+
+            let css_provider = gtk::CssProvider::new();
+            css_provider.load_from_data(APP_CSS).unwrap();
+
+            let screen = window.get_screen().unwrap();
+            gtk::StyleContext::add_provider_for_screen(&screen, &css_provider, u32::MAX);
 
             window.show_all();
             window.present();

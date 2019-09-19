@@ -58,6 +58,7 @@ impl LoginView {
             .iter()
             .any(|s| s.is_empty())
         {
+            self.label.get_style_context().add_class("important");
             self.label.set_label("all fields are required");
         }
 
@@ -68,6 +69,7 @@ impl LoginView {
     }
 
     pub fn on_switch_to(&self) {
+        self.label.get_style_context().remove_class("important");
         self.label.set_label("login to project euler");
         self.captcha.get_new();
     }
