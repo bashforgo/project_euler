@@ -1,5 +1,6 @@
 use std::env;
 use std::process;
+use submitter;
 
 mod problems;
 
@@ -11,7 +12,8 @@ fn main() {
     } else {
         let problem = &args.collect::<Vec<_>>()[1];
         if let Some(solver) = problems::solvers().get(problem) {
-            println!("{}", solver());
+            let solution = solver();
+            submitter::run(problem, &solution).connect();
         } else {
             println!("problem \"{}\" not solved", problem);
             process::exit(1);

@@ -1,0 +1,10 @@
+label.important {
+    font-weight: bold;
+}
+
+button:focus {
+    outline-color: black;
+    outline-style: dotted;
+    outline-offset: 1px;
+    outline-width: 1px;  
+}
