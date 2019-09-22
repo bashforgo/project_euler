@@ -1,8 +1,6 @@
 use reqwest::{Client, RedirectPolicy};
 use std::sync::{Arc, Mutex};
 
-use session_storage::SessionStorage;
-
 #[macro_use]
 mod make_url;
 
@@ -12,6 +10,8 @@ mod login;
 mod post_solution;
 mod session;
 mod session_storage;
+
+use session_storage::SessionStorage;
 
 pub use login::LoginResult;
 pub use post_solution::PostSolutionResult;

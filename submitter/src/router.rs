@@ -1,16 +1,18 @@
-use crate::app::State;
 use gtk::prelude::*;
 use std::rc::Rc;
 
 use crate::{
-    login_view::LoginView,
-    status_view::{self, StatusView},
-    submit_view::SubmitView,
+    app::State,
+    views::{
+        login::LoginView,
+        status::{Message, StatusView},
+        submit::SubmitView,
+    },
 };
 
 pub enum View {
     Submit,
-    Status(status_view::Message),
+    Status(Message),
     Login,
 }
 

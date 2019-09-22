@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::{
-    app::{self, State},
+    app::{Action, State},
     router::View,
 };
 
@@ -48,7 +48,7 @@ impl StatusView {
                 quit_button.set_label("quit");
                 let dispatch = state.dispatch.clone();
                 quit_button.connect_clicked(move |_| {
-                    dispatch.send(app::Message::Quit).unwrap();
+                    dispatch.send(Action::Quit).unwrap();
                 });
                 success_actions.add(&quit_button);
             }
@@ -78,9 +78,7 @@ impl StatusView {
                 let dispatch = state.dispatch.clone();
                 retry_button.connect_clicked(move |_| {
                     let view = retry_switch_to_view.lock().unwrap().take();
-                    dispatch
-                        .send(app::Message::SwitchTo(view.unwrap()))
-                        .unwrap();
+                    dispatch.send(Action::SwitchTo(view.unwrap())).unwrap();
                 });
                 recoverable_actions.add(&retry_button);
             }
@@ -90,7 +88,7 @@ impl StatusView {
                 quit_button.set_label("quit");
                 let dispatch = state.dispatch.clone();
                 quit_button.connect_clicked(move |_| {
-                    dispatch.send(app::Message::Quit).unwrap();
+                    dispatch.send(Action::Quit).unwrap();
                 });
                 recoverable_actions.add(&quit_button);
             }
@@ -117,7 +115,7 @@ impl StatusView {
                 quit_button.set_label("quit");
                 let dispatch = state.dispatch.clone();
                 quit_button.connect_clicked(move |_| {
-                    dispatch.send(app::Message::Quit).unwrap();
+                    dispatch.send(Action::Quit).unwrap();
                 });
                 unrecoverable_actions.add(&quit_button);
             }

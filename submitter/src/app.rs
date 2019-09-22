@@ -9,7 +9,7 @@ use crate::{
 
 const APP_CSS: &[u8] = include_bytes!("app.css");
 
-pub enum Message {
+pub enum Action {
     SwitchTo(View),
     Quit,
 }
@@ -17,8 +17,8 @@ pub enum Message {
 pub struct State {
     pub problem: String,
     pub solution: String,
-    pub dispatch: mpsc::Sender<Message>,
-    message_bus: mpsc::Receiver<Message>,
+    pub dispatch: mpsc::Sender<Action>,
+    message_bus: mpsc::Receiver<Action>,
 }
 
 impl State {
@@ -114,12 +114,9 @@ impl App {
             };
 
             if is_authenticated {
-                state
-                    .dispatch
-                    .send(Message::SwitchTo(View::Submit))
-                    .unwrap();
+                state.dispatch.send(Action::SwitchTo(View::Submit)).unwrap();
             } else {
-                state.dispatch.send(Message::SwitchTo(View::Login)).unwrap();
+                state.dispatch.send(Action::SwitchTo(View::Login)).unwrap();
             }
         }
 
@@ -128,10 +125,10 @@ impl App {
         let application = self.application.clone();
         gtk::timeout_add(100, move || {
             let message_bus = &state.message_bus;
-            if let Ok(message) = message_bus.try_recv() {
-                use Message::*;
+            if let Ok(action) = message_bus.try_recv() {
+                use Action::*;
 
-                match message {
+                match action {
                     SwitchTo(view) => {
                         ui.router.switch_to(view);
                     }

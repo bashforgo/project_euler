@@ -3,10 +3,10 @@ use std::rc::Rc;
 
 use crate::{
     api::{get_api, LoginResult},
-    app::{self, State},
+    app::{Action, State},
     captcha::Captcha,
     router::View,
-    status_view,
+    views::status,
 };
 
 #[derive(Clone)]
@@ -79,7 +79,7 @@ impl LoginView {
         let state = Rc::clone(&self.state);
         gtk::timeout_add(100, move || {
             if let Ok(res) = rx.try_recv() {
-                use status_view::Message;
+                use status::Message;
                 use LoginResult::*;
 
                 let here = Box::new(View::Login);
@@ -92,7 +92,7 @@ impl LoginView {
                     None => View::Status(Message::Recoverable("network error".into(), here)),
                 };
 
-                state.dispatch.send(app::Message::SwitchTo(view)).unwrap();
+                state.dispatch.send(Action::SwitchTo(view)).unwrap();
 
                 gtk::Continue(false)
             } else {

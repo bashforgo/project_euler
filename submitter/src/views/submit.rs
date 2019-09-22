@@ -3,10 +3,10 @@ use std::rc::Rc;
 
 use crate::{
     api::{get_api, PostSolutionResult},
-    app::{self, State},
+    app::{Action, State},
     captcha::Captcha,
     router::View,
-    status_view,
+    views::status,
 };
 
 pub struct SubmitView {
@@ -35,7 +35,7 @@ impl SubmitView {
             let state = Rc::clone(&state);
             gtk::timeout_add(100, move || {
                 if let Ok(res) = rx.try_recv() {
-                    use status_view::Message;
+                    use status::Message;
                     use PostSolutionResult::*;
 
                     let here = Box::new(View::Submit);
@@ -49,7 +49,7 @@ impl SubmitView {
 
                     state
                         .dispatch
-                        .send(app::Message::SwitchTo(View::Status(message)))
+                        .send(Action::SwitchTo(View::Status(message)))
                         .unwrap();
                     gtk::Continue(false)
                 } else {
