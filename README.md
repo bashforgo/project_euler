@@ -9,4 +9,4 @@ Code reviews are more than welcome!
 ## Usage
 
 - working on problems: `cargo test <problem number>`
-- submittin problems: `cargo run <problem number>`
+- submitting problems: `cargo run <problem number>`
