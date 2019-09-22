@@ -2,7 +2,7 @@ use gtk::prelude::*;
 use std::rc::Rc;
 
 use crate::{
-    api::{get_api, SignInResult},
+    api::{get_api, LoginResult},
     app::{self, State},
     captcha::Captcha,
     router::View,
@@ -80,7 +80,7 @@ impl LoginView {
         gtk::timeout_add(100, move || {
             if let Ok(res) = rx.try_recv() {
                 use status_view::Message;
-                use SignInResult::*;
+                use LoginResult::*;
 
                 let here = Box::new(View::Login);
                 let view = match res {
