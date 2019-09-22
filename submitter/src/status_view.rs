@@ -1,11 +1,17 @@
 use gtk::prelude::*;
-use std::rc::Rc;
+use std::{
+    rc::Rc,
+    sync::{Arc, Mutex},
+};
 
-use crate::{app::{self, State}, router::View};
+use crate::{
+    app::{self, State},
+    router::View,
+};
 
 pub enum Message {
     Success(String),
-    Recoverable(String),
+    Recoverable(String, Box<View>),
     Unrecoverable(String),
 }
 
@@ -17,6 +23,7 @@ pub struct StatusView {
     pub recoverable_label: gtk::Label,
     pub unrecoverable: gtk::Box,
     pub unrecoverable_label: gtk::Label,
+    retry_switch_to_view: Arc<Mutex<Option<View>>>,
 }
 
 impl StatusView {
@@ -48,6 +55,7 @@ impl StatusView {
         }
         container.add(&success);
 
+        let retry_switch_to_view = Arc::new(Mutex::new(None));
         let recoverable = gtk::Box::new(gtk::Orientation::Vertical, 8);
         recoverable.set_property("vexpand", &true).unwrap();
         recoverable
@@ -63,12 +71,16 @@ impl StatusView {
                 .unwrap();
             recoverable.add(&recoverable_actions);
 
+            let retry_switch_to_view = Arc::clone(&retry_switch_to_view);
             {
                 let retry_button = gtk::Button::new();
                 retry_button.set_label("retry");
                 let dispatch = state.dispatch.clone();
                 retry_button.connect_clicked(move |_| {
-                    dispatch.send(app::Message::SwitchTo(View::Submit)).unwrap();
+                    let view = retry_switch_to_view.lock().unwrap().take();
+                    dispatch
+                        .send(app::Message::SwitchTo(view.unwrap()))
+                        .unwrap();
                 });
                 recoverable_actions.add(&retry_button);
             }
@@ -120,6 +132,7 @@ impl StatusView {
             recoverable_label,
             unrecoverable,
             unrecoverable_label,
+            retry_switch_to_view,
         }
     }
 
@@ -131,7 +144,10 @@ impl StatusView {
                 self.success_label.set_label(&label);
                 self.container.set_visible_child(&self.success);
             }
-            Recoverable(label) => {
+            Recoverable(label, view) => {
+                let mut switch_to = self.retry_switch_to_view.lock().unwrap();
+                switch_to.replace(*view);
+
                 self.recoverable_label.set_label(&label);
                 self.container.set_visible_child(&self.recoverable);
             }

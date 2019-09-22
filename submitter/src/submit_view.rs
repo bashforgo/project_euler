@@ -38,12 +38,13 @@ impl SubmitView {
                     use status_view::Message;
                     use PostSolutionResult::*;
 
+                    let here = Box::new(View::Submit);
                     let message = match res {
-                        Some(WrongCaptcha) => Message::Recoverable("wrong captcha".into()),
+                        Some(WrongCaptcha) => Message::Recoverable("wrong captcha".into(), here),
                         Some(BadSolution) => Message::Unrecoverable("wrong solution".into()),
                         Some(Success) => Message::Success("solution submitted".into()),
-                        Some(Unknown) => Message::Recoverable("unknown error".into()),
-                        None => Message::Recoverable("network error".into()),
+                        Some(Unknown) => Message::Recoverable("unknown error".into(), here),
+                        None => Message::Recoverable("network error".into(), here),
                     };
 
                     state

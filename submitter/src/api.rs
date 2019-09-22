@@ -64,7 +64,7 @@ impl API {
         self.session.is_some()
     }
 
-    pub fn sign_in(
+    pub fn login(
         &self,
         username: String,
         password: String,

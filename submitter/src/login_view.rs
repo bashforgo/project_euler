@@ -1,7 +1,13 @@
 use gtk::prelude::*;
 use std::rc::Rc;
 
-use crate::{api::get_api, app::State, captcha::Captcha};
+use crate::{
+    api::{get_api, SignInResult},
+    app::{self, State},
+    captcha::Captcha,
+    router::View,
+    status_view,
+};
 
 #[derive(Clone)]
 pub struct LoginView {
@@ -72,12 +78,32 @@ impl LoginView {
             let api = get_api();
             let api = api.lock().unwrap();
 
-            api.sign_in(username, password, captcha)
+            api.login(username, password, captcha)
         };
 
-        let res = rx.recv().unwrap();
+        let state = Rc::clone(&self.state);
+        gtk::timeout_add(100, move || {
+            if let Ok(res) = rx.try_recv() {
+                use status_view::Message;
+                use SignInResult::*;
 
-        println!("res {:?}", res);
+                let here = Box::new(View::Login);
+                let view = match res {
+                    Some(Success) => View::Submit,
+                    Some(Fail) => View::Status(Message::Recoverable("login failed".into(), here)),
+                    Some(Unknown) => {
+                        View::Status(Message::Recoverable("unknown error".into(), here))
+                    }
+                    None => View::Status(Message::Recoverable("network error".into(), here)),
+                };
+
+                state.dispatch.send(app::Message::SwitchTo(view)).unwrap();
+
+                gtk::Continue(false)
+            } else {
+                gtk::Continue(true)
+            }
+        });
     }
 
     pub fn on_switch_to(&self) {
