@@ -1,7 +1,7 @@
 use gtk::prelude::*;
 use std::rc::Rc;
 
-use crate::{app::State, captcha::Captcha};
+use crate::{api::get_api, app::State, captcha::Captcha};
 
 #[derive(Clone)]
 pub struct LoginView {
@@ -54,18 +54,30 @@ impl LoginView {
         let password = self.password.get_buffer().get_text();
         let captcha = self.captcha.get_text();
 
+        println!(
+            "username={} password={} captcha={}",
+            username, password, captcha
+        );
+
         if vec![&username, &password, &captcha]
             .iter()
             .any(|s| s.is_empty())
         {
             self.label.get_style_context().add_class("important");
             self.label.set_label("all fields are required");
+            return;
         }
 
-        println!(
-            "username={} password={} captcha={}",
-            username, password, captcha
-        );
+        let rx = {
+            let api = get_api();
+            let api = api.lock().unwrap();
+
+            api.sign_in(username, password, captcha)
+        };
+
+        let res = rx.recv().unwrap();
+
+        println!("res {:?}", res);
     }
 
     pub fn on_switch_to(&self) {

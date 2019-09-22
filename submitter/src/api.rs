@@ -10,10 +10,16 @@ use std::{
 const BASE_URL: &str = "https://projecteuler.net";
 
 macro_rules! make_url {
-    ($($arg:tt)*) => (&format!("{}{}", BASE_URL, $($arg)*))
+    ($($arg:tt)*) => (&format!("{}{}", BASE_URL, format!($($arg)*)));
 }
 
 #[derive(Debug)]
+pub enum SignInResult {
+    Fail,
+    Success,
+    Unknown,
+}
+
 pub enum PostSolutionResult {
     WrongCaptcha,
     BadSolution,
@@ -49,24 +55,99 @@ impl API {
         self.session.is_some()
     }
 
+    pub fn sign_in(
+        &self,
+        username: String,
+        password: String,
+        captcha: String,
+    ) -> mpsc::Receiver<Option<SignInResult>> {
+        let (tx, rx) = mpsc::channel();
+
+        thread::spawn(move || {
+            let req = {
+                let api = get_api();
+                let api = api.lock().unwrap();
+
+                api.client.post(make_url!("/sign_in")).form(&[
+                    ("username", username.as_str()),
+                    ("password", password.as_str()),
+                    ("captcha", captcha.as_str()),
+                    ("remember_me", "1"),
+                    ("sign_in", "Sign+In"),
+                ])
+            };
+
+            let res = req
+                .send()
+                .map(|res| {
+                    use SignInResult::*;
+
+                    if res.status() == 302 {
+                        let headers = res.headers();
+
+                        let has_location = headers.contains_key(header::LOCATION);
+
+                        if has_location {
+                            let location = &headers[header::LOCATION];
+
+                            if location == "archives" {
+                                println!("success");
+                                Success
+                            } else if location == "sign_in" {
+                                println!("fail");
+                                Fail
+                            } else {
+                                println!("unknown location {:?}", location);
+                                Unknown
+                            }
+                        } else {
+                            println!("missing location");
+                            Unknown
+                        }
+                    } else {
+                        println!("unknown status {:?}", res.status());
+                        Unknown
+                    }
+                })
+                .ok();
+
+            tx.send(res).unwrap();
+        });
+
+        rx
+    }
+
     pub fn get_captcha(&self) -> mpsc::Receiver<Option<Box<dyn Read + Send>>> {
         let (tx, rx) = mpsc::channel();
 
         thread::spawn(move || {
-            let api = get_api();
-            let read = api
-                .lock()
-                .map_err(|_| "can't get api")
-                .and_then(|api| {
-                    let mut req = api.client.get(make_url!("/captcha/show_captcha.php"));
+            let req = {
+                let api = get_api();
+                let api = api.lock().unwrap();
 
-                    if let Some(sess) = &api.session {
-                        req = req.header(header::COOKIE, format!("PHPSESSID={}", sess));
+                let mut req = api.client.get(make_url!("/captcha/show_captcha.php"));
+
+                if let Some(sess) = &api.session {
+                    req = req.header(header::COOKIE, format!("PHPSESSID={}", sess));
+                }
+
+                req
+            };
+
+            let read = req
+                .send()
+                .map(|res| -> Box<dyn Read + Send> {
+                    let api = get_api();
+                    let api = api.lock().unwrap();
+
+                    if !api.has_session() {
+                        let mut cookies = res.cookies();
+                        let cookie = cookies.next().unwrap();
+                        println!("{} {}", cookie.name(), cookie.value());
                     }
 
-                    req.send().map_err(|_| "can't download captcha")
+                    Box::new(res)
                 })
-                .map(|res| Box::new(res) as Box<dyn Read + Send>)
                 .ok();
 
             tx.send(read).unwrap();
@@ -84,25 +165,25 @@ impl API {
         let (tx, rx) = mpsc::channel();
 
         thread::spawn(move || {
-            let api = get_api();
-            let res = api
-                .lock()
-                .map_err(|_| "can't get api")
-                .and_then(|api| {
-                    let mut req = api
-                        .client
-                        .post(make_url!(format!("/problem={}", problem)))
-                        .form(&[
-                            (format!("guess_{}", problem).as_str(), solution.as_str()),
-                            ("captcha", captcha.as_str()),
-                        ]);
+            let req = {
+                let api = get_api();
+                let api = api.lock().unwrap();
 
-                    if let Some(sess) = &api.session {
-                        req = req.header(header::COOKIE, format!("PHPSESSID={}", sess));
-                    }
+                let mut req = api.client.post(make_url!("/problem={}", problem)).form(&[
+                    (format!("guess_{}", problem).as_str(), solution.as_str()),
+                    ("captcha", captcha.as_str()),
+                ]);
 
-                    req.send().map_err(|_| "error posting solution")
-                })
+                if let Some(sess) = &api.session {
+                    req = req.header(header::COOKIE, format!("PHPSESSID={}", sess));
+                }
+
+                req
+            };
+
+            let res = req
+                .send()
+                .map_err(|_| "error posting solution")
                 .and_then(|mut res| {
                     use PostSolutionResult::*;
 
