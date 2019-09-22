@@ -3,6 +3,7 @@ use reqwest::{header, Client, RedirectPolicy};
 use std::{
     fs,
     io::Read,
+    path::PathBuf,
     sync::{mpsc, Arc, Mutex},
     thread,
 };
@@ -32,10 +33,18 @@ pub struct API {
     client: Client,
 }
 
-fn get_session() -> Option<String> {
+fn session_storage() -> Option<PathBuf> {
     let mut home = dirs::home_dir()?;
     home.push(".project_euler_session");
-    fs::read_to_string(home).ok()
+    Some(home)
+}
+
+fn get_session() -> Option<String> {
+    fs::read_to_string(session_storage()?).ok()
+}
+
+fn store_session(sess: String) -> Option<()> {
+    fs::write(session_storage()?, sess.as_bytes()).ok()
 }
 
 impl API {
@@ -68,13 +77,19 @@ impl API {
                 let api = get_api();
                 let api = api.lock().unwrap();
 
-                api.client.post(make_url!("/sign_in")).form(&[
+                let mut req = api.client.post(make_url!("/sign_in")).form(&[
                     ("username", username.as_str()),
                     ("password", password.as_str()),
                     ("captcha", captcha.as_str()),
                     ("remember_me", "1"),
                     ("sign_in", "Sign+In"),
-                ])
+                ]);
+
+                if let Some(sess) = &api.session {
+                    req = req.header(header::COOKIE, format!("PHPSESSID={}", sess));
+                }
+
+                req
             };
 
             let res = req
@@ -92,6 +107,14 @@ impl API {
 
                             if location == "archives" {
                                 println!("success");
+
+                                let cookie = res.cookies().next().unwrap();
+                                let sess = cookie.value().to_string();
+                                let written = store_session(sess);
+                                if written.is_none() {
+                                    eprintln!("couldn't store session");
+                                }
+
                                 Success
                             } else if location == "sign_in" {
                                 println!("fail");
@@ -117,7 +140,7 @@ impl API {
         rx
     }
 
-    pub fn get_captcha(&self) -> mpsc::Receiver<Option<Box<dyn Read + Send>>> {
+    pub fn get_captcha(&self) -> mpsc::Receiver<Option<impl Read + Send>> {
         let (tx, rx) = mpsc::channel();
 
         thread::spawn(move || {
@@ -136,17 +159,17 @@ impl API {
 
             let read = req
                 .send()
-                .map(|res| -> Box<dyn Read + Send> {
+                .map(|res| {
                     let api = get_api();
-                    let api = api.lock().unwrap();
+                    let mut api = api.lock().unwrap();
 
                     if !api.has_session() {
                         let mut cookies = res.cookies();
                         let cookie = cookies.next().unwrap();
-                        println!("{} {}", cookie.name(), cookie.value());
+                        api.session = Some(cookie.value().to_string());
                     }
 
-                    Box::new(res)
+                    res
                 })
                 .ok();
 
