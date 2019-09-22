@@ -14,7 +14,6 @@ macro_rules! make_url {
     ($($arg:tt)*) => (&format!("{}{}", BASE_URL, format!($($arg)*)));
 }
 
-#[derive(Debug)]
 pub enum SignInResult {
     Fail,
     Success,
@@ -47,6 +46,10 @@ fn store_session(sess: String) -> Option<()> {
     fs::write(session_storage()?, sess.as_bytes()).ok()
 }
 
+fn destroy_session() -> Option<()> {
+    fs::remove_file(session_storage()?).ok()
+}
+
 impl API {
     fn new() -> API {
         let client = Client::builder()
@@ -62,6 +65,52 @@ impl API {
 
     pub fn has_session(&self) -> bool {
         self.session.is_some()
+    }
+
+    pub fn is_authenticated(&self) -> mpsc::Receiver<Option<bool>> {
+        let (tx, rx) = mpsc::channel();
+
+        thread::spawn(move || {
+            let req = {
+                let api = get_api();
+                let api = api.lock().unwrap();
+
+                let mut req = api.client.get(make_url!("/progress"));
+
+                if let Some(sess) = &api.session {
+                    req = req.header(header::COOKIE, format!("PHPSESSID={}", sess));
+                }
+
+                req
+            };
+
+            let read = req
+                .send()
+                .and_then(|mut res| {
+                    let text = res.text()?;
+
+                    Ok(!text.contains("Sign In"))
+                })
+                .map(|is_authenticated| {
+                    if !is_authenticated {
+                        let api = get_api();
+                        let mut api = api.lock().unwrap();
+
+                        api.session.take();
+                        let destroyed = destroy_session();
+                        if destroyed.is_none() {
+                            eprintln!("couldn't destroy session");
+                        }
+                    }
+
+                    is_authenticated
+                })
+                .ok();
+
+            tx.send(read).unwrap();
+        });
+
+        rx
     }
 
     pub fn login(
@@ -106,7 +155,6 @@ impl API {
                             let location = &headers[header::LOCATION];
 
                             if location == "archives" {
-                                println!("success");
 
                                 let cookie = res.cookies().next().unwrap();
                                 let sess = cookie.value().to_string();
@@ -117,18 +165,14 @@ impl API {
 
                                 Success
                             } else if location == "sign_in" {
-                                println!("fail");
                                 Fail
                             } else {
-                                println!("unknown location {:?}", location);
                                 Unknown
                             }
                         } else {
-                            println!("missing location");
                             Unknown
                         }
                     } else {
-                        println!("unknown status {:?}", res.status());
                         Unknown
                     }
                 })

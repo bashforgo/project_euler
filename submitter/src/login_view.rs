@@ -60,11 +60,6 @@ impl LoginView {
         let password = self.password.get_buffer().get_text();
         let captcha = self.captcha.get_text();
 
-        println!(
-            "username={} password={} captcha={}",
-            username, password, captcha
-        );
-
         if vec![&username, &password, &captcha]
             .iter()
             .any(|s| s.is_empty())

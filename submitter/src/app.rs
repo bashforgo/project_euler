@@ -100,7 +100,20 @@ impl App {
                 api.has_session()
             };
 
-            if has_session {
+            let is_authenticated = {
+                if has_session {
+                    let rx = {
+                        let api = get_api();
+                        let api = api.lock().unwrap();
+                        api.is_authenticated()
+                    };
+                    rx.recv().unwrap().unwrap_or(false)
+                } else {
+                    false
+                }
+            };
+
+            if is_authenticated {
                 state
                     .dispatch
                     .send(Message::SwitchTo(View::Submit))
