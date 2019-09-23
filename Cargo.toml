@@ -7,6 +7,9 @@ edition = "2018"
 [lib]
 path = "src/lib/mod.rs"
 
+[features]
+submit = ["submitter"]
+
 [dependencies]
 num = "0.2.0"
 
@@ -15,3 +18,4 @@ path = "auto_test"
 
 [dependencies.submitter]
 path = "submitter"
+optional = true

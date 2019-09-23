@@ -1,8 +1,17 @@
 use std::env;
 use std::process;
-use submitter;
 
 mod problems;
+
+#[cfg(feature = "submit")]
+fn use_solution(problem: &str, solution: &str) {
+    submitter::run(problem, &solution).connect();
+}
+
+#[cfg(not(feature = "submit"))]
+fn use_solution(_problem: &str, solution: &str) {
+    println!("{}", solution);
+}
 
 fn main() {
     let args = env::args();
@@ -13,7 +22,7 @@ fn main() {
         let problem = &args.collect::<Vec<_>>()[1];
         if let Some(solver) = problems::solvers().get(problem) {
             let solution = solver();
-            submitter::run(problem, &solution).connect();
+            use_solution(problem, &solution);
         } else {
             println!("problem \"{}\" not solved", problem);
             process::exit(1);
