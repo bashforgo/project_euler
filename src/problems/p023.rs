@@ -5,31 +5,23 @@ use project_euler::divisors;
 const MAX: u128 = 28124;
 
 pub fn solve() -> String {
-    let abundant_numbers = (2..MAX)
-        .map(|n| (n, divisors::sum_of_proper_divisors(n)))
-        .filter(|(n, sopd)| sopd > n)
-        .map(|t| t.0)
-        .collect::<Vec<_>>();
+    let mut abundant = HashSet::new();
 
-    println!("{}", abundant_numbers.len());
-
-    let mut set = HashSet::new();
-
-    for n in &abundant_numbers {
-        for m in &abundant_numbers {
-            if m > n {
-                break;
-            }
-            let nm = n + m;
-            if nm > MAX {
-                break;
-            }
-            set.insert(nm);
+    let mut sum = 1;
+    'outer: for n in 2..MAX {
+        let sopd = divisors::sum_of_proper_divisors(n);
+        if sopd > n {
+            abundant.insert(n);
         }
+
+        for a in &abundant {
+            if abundant.contains(&(n - a)) {
+                continue 'outer;
+            }
+        }
+
+        sum += n;
     }
 
-    (1..MAX)
-        .filter(|n| !set.contains(n))
-        .sum::<u128>()
-        .to_string()
+    sum.to_string()
 }
