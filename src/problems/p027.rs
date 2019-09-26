@@ -3,9 +3,13 @@ use project_euler::primes::is_prime;
 pub fn solve() -> String {
     let mut max_len = 0;
     let mut pair = None;
-    for a in -999_i128..=999 {
-        for b in -999_i128..=999 {
-            for n in 0_i128.. {
+    for a in -999..=999 {
+        for b in 2..=999 {
+            // https://projecteuler.net/thread=27;post=683
+            if !is_prime(b as u128) {
+                break;
+            }
+            for n in 0.. {
                 let q = (n * n) + (a * n) + b;
                 if q < 0 {
                     break;
