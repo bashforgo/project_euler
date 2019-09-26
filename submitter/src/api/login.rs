@@ -28,7 +28,7 @@ impl API {
                     ("password", password.as_str()),
                     ("captcha", captcha.as_str()),
                     ("remember_me", "1"),
-                    ("sign_in", "Sign+In"),
+                    ("sign_in", "Sign In"),
                 ]);
                 api.use_session(req)
             };
