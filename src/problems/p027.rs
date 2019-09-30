@@ -7,7 +7,7 @@ pub fn solve() -> String {
         for b in 2..=999 {
             // https://projecteuler.net/thread=27;post=683
             if !is_prime(b as u128) {
-                break;
+                continue;
             }
             for n in 0.. {
                 let q = (n * n) + (a * n) + b;

@@ -3,6 +3,10 @@ use super::factors;
 type Size = u128;
 
 pub fn sum_of_proper_divisors(n: Size) -> Size {
+    if n == 1 {
+        return 1;
+    }
+
     let ps = factors::componentize(n);
 
     let mut sum = 1;
