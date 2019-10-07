@@ -2,6 +2,19 @@ use super::factors;
 
 type Size = u128;
 
+pub fn gcd(a: Size, b: Size) -> Size {
+    let mut a = a;
+    let mut b = b;
+
+    while b != 0 {
+        let tmp = b;
+        b = a % b;
+        a = tmp;
+    }
+
+    a
+}
+
 pub fn sum_of_proper_divisors(n: Size) -> Size {
     if n == 1 {
         return 1;
@@ -20,6 +33,10 @@ pub fn sum_of_proper_divisors(n: Size) -> Size {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn gcd_() {
+        assert_eq!(gcd(1071, 462), 21);
+    }
 
     #[test]
     fn sum_of_proper_divisors_() {

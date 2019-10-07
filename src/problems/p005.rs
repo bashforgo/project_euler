@@ -1,18 +1,9 @@
-fn gcd(a: i32, b: i32) -> i32 {
-    let mut a = a;
-    let mut b = b;
+use project_euler::divisors;
 
-    while b != 0 {
-        let tmp = b;
-        b = a % b;
-        a = tmp;
-    }
+type Size = u128;
 
-    a
-}
-
-fn lcm(a: i32, b: i32) -> i32 {
-    (a * b) / gcd(a, b)
+fn lcm(a: Size, b: Size) -> Size {
+    (a * b) / divisors::gcd(a, b)
 }
 
 pub fn solve() -> String {
@@ -22,11 +13,6 @@ pub fn solve() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn _gcd() {
-        assert_eq!(gcd(1071, 462), 21);
-    }
 
     #[test]
     fn _lcm() {
