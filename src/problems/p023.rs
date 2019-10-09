@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use project_euler::divisors;
+use project_euler::integer;
 
 const MAX: u128 = 28124;
 
@@ -9,7 +9,7 @@ pub fn solve() -> String {
 
     let mut sum = 1;
     'outer: for n in 2..MAX {
-        let sopd = divisors::sum_of_proper_divisors(n);
+        let sopd = integer::sum_of_proper_divisors(n);
         if sopd > n {
             abundant.insert(n);
         }

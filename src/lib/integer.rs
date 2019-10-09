@@ -1,6 +1,21 @@
+use num::BigUint;
+
 use super::factors;
 
 type Size = u128;
+
+pub fn factorial(mut n: Size) -> BigUint {
+    if n == 0 {
+        return BigUint::from(1_u8);
+    }
+
+    let mut f = BigUint::from(n);
+    while n > 1 {
+        n -= 1;
+        f *= n;
+    }
+    f
+}
 
 pub fn gcd(a: Size, b: Size) -> Size {
     let mut a = a;

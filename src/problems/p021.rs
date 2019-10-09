@@ -1,15 +1,15 @@
-use project_euler::divisors;
+use project_euler::integer;
 
 type Size = u128;
 
 pub fn solve() -> String {
     (2..10000)
         .filter(|&a| {
-            let b = divisors::sum_of_proper_divisors(a);
+            let b = integer::sum_of_proper_divisors(a);
             if a == b {
                 return false;
             }
-            let a_ = divisors::sum_of_proper_divisors(b);
+            let a_ = integer::sum_of_proper_divisors(b);
             a == a_
         })
         .sum::<Size>()

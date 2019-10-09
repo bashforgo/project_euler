@@ -1,6 +1,6 @@
 use std::f32;
 
-use project_euler::divisors;
+use project_euler::integer;
 
 type Size = u128;
 
@@ -33,7 +33,7 @@ pub fn solve() -> String {
 
     let t = top.into_iter().product::<Size>();
     let b = bot.into_iter().product::<Size>();
-    let d = divisors::gcd(t, b);
+    let d = integer::gcd(t, b);
 
     (b / d).to_string()
 }

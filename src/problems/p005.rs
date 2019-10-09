@@ -1,9 +1,9 @@
-use project_euler::divisors;
+use project_euler::integer;
 
 type Size = u128;
 
 fn lcm(a: Size, b: Size) -> Size {
-    (a * b) / divisors::gcd(a, b)
+    (a * b) / integer::gcd(a, b)
 }
 
 pub fn solve() -> String {
